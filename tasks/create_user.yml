@@ -1,5 +1,5 @@
 ---
-- name: Create {{ item.value.name | default(item.key) }} user
+- name: Create user
   become: yes
   user:
     comment: "{{ item.value.gecos | default(item.key) }}"
@@ -14,18 +14,18 @@
     state: "{{ item.value.state | default(omit) }}"
     system: "{{ item.value.system | default(omit) }}"
     uid: "{{ item.value.uid | default(omit) }}"
-  when: (not users_and_groups.whitelist_groups)
-    or ( item.value.groups is defined and ( item.value.groups | intersect(users_and_groups.whitelist_groups )))
-    or ( item.value.group is defined and item.value.group in users_and_groups.whitelist_groups)
+  when: (not whitelist_groups)
+    or ( item.value.groups is defined and ( item.value.groups | intersect(whitelist_groups )))
+    or ( item.value.group is defined and item.value.group in whitelist_groups)
   tags:
     - configuration
   register: user_created
 
-- name: Check if {{ item.value.name | default(item.key) }} has password
+- name: Check if user has password
   shell: passwd --status {{ item.value.name | default(item.key) }} | awk '{ print $2 }' | grep 'NP\|L' > /dev/null
   ignore_errors: yes
   register: user_has_no_password
-  changed_when: user_has_no_password.rc > 0
+  changed_when: false
   when: ( item.value.password is not defined )
     and (
       ( item.value.state is not defined )
@@ -33,9 +33,8 @@
     )
   tags:
     - configuration
-  when: user_created.changed
 
-- name: Reset {{ item.value.name | default(item.key) }}'s locked or absent password
+- name: Reset user's locked or absent password
   become: yes
   command: "usermod -p '{{ item.value.password|default()}}' {{ item.value.name | default(item.key) }}"
   when: ( item.value.password is not defined )
@@ -45,11 +44,11 @@
     )
     and ( user_has_no_password is defined )
     and ( user_has_no_password.rc == 0 )
+    and user_created.changed
   tags:
     - configuration
-  when: user_created.changed
 
-- name: Expire new {{ item.value.name | default(item.key) }}'s password to prompt creation
+- name: Expire new user's password to prompt creation
   become: yes
   command: "chage -d 0 {{ item.value.name | default(item.key) }}"
   when: ( item.value.password is not defined )
@@ -59,11 +58,11 @@
     )
     and ( user_has_no_password is defined )
     and ( user_has_no_password.rc == 0 )
+    and user_created.changed
   tags:
     - configuration
-  when: user_created.changed
 
-- name: Update {{ item.value.name | default(item.key) }}'s' home directory permissions
+- name: Update user's home directory permissions
   become: yes
   file:
     group: "{{ item.value.group | default(omit) }}"
@@ -74,15 +73,14 @@
   when: (item.value.state is not defined or item.value.state != "absent")
     and (item.value.createhome is not defined or item.value.createhome)
     and (
-      (not users_and_groups.whitelist_groups)
-      or ( item.value.groups is defined and ( item.value.groups | intersect(users_and_groups.whitelist_groups )))
-      or ( item.value.group is defined and item.value.group in users_and_groups.whitelist_groups)
+      (not whitelist_groups)
+      or ( item.value.groups is defined and ( item.value.groups | intersect(whitelist_groups )))
+      or ( item.value.group is defined and item.value.group in whitelist_groups)
     )
   tags:
     - configuration
-  when: user_created.changed
 
-- name: Create .ssh directory in default {{ item.value.name | default(item.key) }} home directory
+- name: Create .ssh directory in user's home directory
   become: yes
   file:
     path: /home/{{ item.value.name | default(item.key) }}/.ssh
@@ -90,16 +88,16 @@
     group: "{{ item.value.group | default(omit) }}"
     mode: 0700
     state: directory
-  when: (users_and_groups.authorized_keys_dir is none)
+  when: (authorized_keys_dir == 'default')
     and (item.value.state is not defined or item.value.state != "absent")
     and (
-      (not users_and_groups.whitelist_groups)
-      or ( item.value.groups is defined and ( item.value.groups | intersect(users_and_groups.whitelist_groups )))
-      or ( item.value.group is defined and item.value.group in users_and_groups.whitelist_groups)
+      (not whitelist_groups)
+      or ( item.value.groups is defined and ( item.value.groups | intersect(whitelist_groups )))
+      or ( item.value.group is defined and item.value.group in whitelist_groups)
     )
+    and user_created.changed
   tags:
     - configuration
-  when: user_created.changed
 
 - name: Copy ssh auth key file to default location
   become: yes
@@ -107,13 +105,13 @@
     user: "{{ item.value.name | default(item.key) }}"
     key: "{{ lookup('file', item.value.authorized_keys_file) }}"
     manage_dir: yes
-  when: (users_and_groups.authorized_keys_dir is none)
+  when: (authorized_keys_dir == 'default')
     and (item.value.state is not defined or item.value.state != "absent")
     and (item.value.authorized_keys_file is defined)
     and (
-      (not users_and_groups.whitelist_groups)
-      or (item.value.groups is defined and (item.value.groups | intersect(users_and_groups.whitelist_groups)))
-      or (item.value.group is defined and item.value.group in users_and_groups.whitelist_groups)
+      (not whitelist_groups)
+      or (item.value.groups is defined and (item.value.groups | intersect(whitelist_groups)))
+      or (item.value.group is defined and item.value.group in whitelist_groups)
     )
   tags:
     - configuration
@@ -123,15 +121,15 @@
   authorized_key:
     user: "{{ item.value.name | default(item.key) }}"
     key: "{{ lookup('file', item.value.authorized_keys_file) }}"
-    path: "{{ users_and_groups.authorized_keys_dir ~ '/' ~ }}{{ item.value.name | default(item.key) }}"
+    path: "{{ authorized_keys_dir }}/{{ item.value.name | default(item.key) }}"
     manage_dir: no
-  when: (users_and_groups.authorized_keys_dir is not none)
+  when: (authorized_keys_dir != 'default')
     and (item.value.state is not defined or item.value.state != "absent")
     and (item.value.authorized_keys_file is defined)
     and (
-      (not users_and_groups.whitelist_groups)
-      or (item.value.groups is defined and (item.value.groups | intersect(users_and_groups.whitelist_groups)))
-      or (item.value.group is defined and item.value.group in users_and_groups.whitelist_groups)
+      (not whitelist_groups)
+      or (item.value.groups is defined and (item.value.groups | intersect(whitelist_groups)))
+      or (item.value.group is defined and item.value.group in whitelist_groups)
     )
   tags:
     - configuration
@@ -144,32 +142,32 @@
     owner: "{{ item.value.name | default(item.key) }}"
     group: "{{ item.value.group | default(omit) }}"
     mode: 0644
-  when: ( users_and_groups.authorized_keys_dir is none)
+  when: (authorized_keys_dir == 'default')
     and (item.value.state is not defined or item.value.state != "absent")
     and (item.value.authorized_keys is defined)
     and (
-      (not users_and_groups.whitelist_groups)
-      or (item.value.groups is defined and (item.value.groups | intersect(users_and_groups.whitelist_groups)))
-      or (item.value.group is defined and item.value.group in users_and_groups.whitelist_groups)
+      (not whitelist_groups)
+      or (item.value.groups is defined and (item.value.groups | intersect(whitelist_groups)))
+      or (item.value.group is defined and item.value.group in whitelist_groups)
     )
   tags:
     - configuration
 
-- name: Add ssh auth keys ssh auth key file to alternate file
+- name: Add ssh auth keys to alternate file
   become: yes
   template:
     src: authorized_keys.j2
-    dest: "{{ users_and_groups.authorized_keys_dir ~ '/' ~ }}{{ item.value.name | default(item.key) }}"
+    dest: "{{ authorized_keys_dir }}/{{ item.value.name | default(item.key) }}"
     owner: "{{ item.value.name | default(item.key) }}"
     group: "{{ item.value.group | default(omit) }}"
     mode: 0644
-  when: (users_and_groups.authorized_keys_dir is not none)
+  when: (authorized_keys_dir != 'default')
     and (item.value.state is not defined or item.value.state != "absent")
     and (item.value.authorized_keys is defined)
     and (
-      (not users_and_groups.whitelist_groups)
-      or (item.value.groups is defined and (item.value.groups | intersect(users_and_groups.whitelist_groups)))
-      or (item.value.group is defined and item.value.group in users_and_groups.whitelist_groups)
+      (not whitelist_groups)
+      or (item.value.groups is defined and (item.value.groups | intersect(whitelist_groups)))
+      or (item.value.group is defined and item.value.group in whitelist_groups)
     )
   tags:
     - configuration
