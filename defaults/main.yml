@@ -1,5 +1,5 @@
 ---
-
+user_password_management: yes
 users_and_groups:
   # Groups List
   # groups:

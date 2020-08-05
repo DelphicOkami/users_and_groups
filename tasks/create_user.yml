@@ -31,6 +31,7 @@
       ( item.value.state is not defined )
       or ( item.value.state != "absent" )
     )
+    and user_password_management
   tags:
     - configuration
 
@@ -45,6 +46,7 @@
     and ( user_has_no_password is defined )
     and ( user_has_no_password.rc == 0 )
     and user_created.changed
+    and user_password_management
   tags:
     - configuration
 
@@ -59,6 +61,7 @@
     and ( user_has_no_password is defined )
     and ( user_has_no_password.rc == 0 )
     and user_created.changed
+    and user_password_management
   tags:
     - configuration
 
