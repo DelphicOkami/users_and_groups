@@ -31,7 +31,6 @@
       ( item.value.state is not defined )
       or ( item.value.state != "absent" )
     )
-    and user_password_management
   tags:
     - configuration
 
