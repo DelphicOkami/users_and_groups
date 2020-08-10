@@ -11,7 +11,7 @@ This roles manages OS users and groups. This was originally forked from sansible
 
 This role has no dependencies.
 
-To install run `ansible-galaxy install DelphicOkami.users_and_groups` or add
+To install run `ansible-galaxy install delphicokami.users_and_groups` or add
 this to your `roles.yml`
 
 ```YAML
@@ -33,7 +33,7 @@ Simple example for creating two users and two groups.
   hosts: sandbox
 
   roles:
-    - name: DelphicOkami.users_and_groups
+    - name: delphicokami.users_and_groups
       users_and_groups:
         user_password_management: yes # If this is set to yes the role will force reset of a users password if none is set (meaning users must manually set their password on next login)
         groups:
@@ -65,7 +65,7 @@ Creating a jailed SFTP user (cf [here](https://wiki.archlinux.org/index.php/SFTP
   hosts: sandbox
 
   roles:
-    - name: DelphicOkami.users_and_groups
+    - name: delphicokami.users_and_groups
       users_and_groups:
         authorized_keys_dir: /etc/ssh/authorized_keys
         groups:
@@ -88,7 +88,7 @@ group|host vars file.
     - "vars/sandbox/users.yml"
 
   roles:
-    - name: DelphicOkami.users_and_groups
+    - name: delphicokami.users_and_groups
       users_and_groups:
         groups: "{{ base_image.os_groups }}"
         users: "{{ base_image.admins }}"
@@ -108,16 +108,16 @@ Add selected group to sudoers
     - "vars/sandbox/users.yml"
 
   roles:
-    - name: DelphicOkami.users_and_groups
+    - name: delphicokami.users_and_groups
       users_and_groups:
         groups: "{{ base_image.os_groups }}"
         users: "{{ base_image.admins }}"
 
-    - name: DelphicOkami.users_and_groups
+    - name: delphicokami.users_and_groups
       users_and_groups:
         users: "{{ developers }}"
 
-    - name: DelphicOkami.users_and_groups
+    - name: delphicokami.users_and_groups
       users_and_groups:
         sudoers:
           wheel:
@@ -166,7 +166,7 @@ In a base image:
     - vars/users.yml
 
   roles:
-    - role: DelphicOkami.users_and_groups
+    - role: delphicokami.users_and_groups
       users_and_groups:
         whitelist_groups:
           - admins
@@ -188,7 +188,7 @@ In a service role:
     - vars/users.yml
 
   roles:
-    - role: DelphicOkami.users_and_groups
+    - role: delphicokami.users_and_groups
       users_and_groups:
         whitelist_groups:
           - admins
