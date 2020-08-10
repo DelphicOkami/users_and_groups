@@ -1,11 +1,9 @@
-# Users and Roles
+# Users and Groups
 * [Installation and Dependencies](#installation-and-dependencies)
 * [Tags](#tags)
 * [Examples](#examples)
 
-This roles manages OS users and groups.
-
-
+This roles manages OS users and groups. This was originally forked from sansible/users_and_groups however the 2 work streams have now diverged heavily
 
 
 
@@ -26,15 +24,6 @@ and run `ansible-galaxy install -p ./roles -r roles.yml`
 
 
 
-## Tags
-
-This role uses two tags:
-* `configuration` - Ensures users are created, and fully managed
-* `install` - Ensures that all required directories are created
-
-
-
-
 ## Examples
 
 Simple example for creating two users and two groups.
@@ -46,6 +35,7 @@ Simple example for creating two users and two groups.
   roles:
     - name: DelphicOkami.users_and_groups
       users_and_groups:
+        user_password_management: yes # If this is set to yes the role will force reset of a users password if none is set (meaning users must manually set their password on next login)
         groups:
           lorem: # This is the group name
             system: yes
