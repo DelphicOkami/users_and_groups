@@ -25,7 +25,7 @@
   shell: passwd --status {{ item.value.name | default(item.key) }} | awk '{ print $2 }' | grep 'NP\|L' > /dev/null
   ignore_errors: yes
   register: user_has_no_password
-  changed_when: user_has_no_password.rc > 0
+  changed_when: false
   when: ( item.value.password is not defined )
     and (
       ( item.value.state is not defined )
@@ -47,6 +47,7 @@
     and ( user_has_no_password.rc is defined)
     and ( user_has_no_password.rc == 0 )
     and ( user_created.changed )
+    and ( user_password_management )
   tags:
     - configuration
 
@@ -92,7 +93,7 @@
     group: "{{ item.value.group | default(omit) }}"
     mode: 0700
     state: directory
-  when: (users_and_groups.authorized_keys_dir is none)
+  when: (authorized_keys_dir == 'default')
     and (item.value.state is not defined or item.value.state != "absent")
     and (
       (not users_and_groups.whitelist_groups)
@@ -109,7 +110,7 @@
     user: "{{ item.value.name | default(item.key) }}"
     key: "{{ lookup('file', item.value.authorized_keys_file) }}"
     manage_dir: yes
-  when: (users_and_groups.authorized_keys_dir is none)
+  when: (authorized_keys_dir == 'default')
     and (item.value.state is not defined or item.value.state != "absent")
     and (item.value.authorized_keys_file is defined)
     and (
@@ -127,7 +128,7 @@
     key: "{{ lookup('file', item.value.authorized_keys_file) }}"
     path: "{{ users_and_groups.authorized_keys_dir ~ '/' ~ }}{{ item.value.name | default(item.key) }}"
     manage_dir: no
-  when: (users_and_groups.authorized_keys_dir is not none)
+  when: (authorized_keys_dir != 'default')
     and (item.value.state is not defined or item.value.state != "absent")
     and (item.value.authorized_keys_file is defined)
     and (
@@ -146,7 +147,7 @@
     owner: "{{ item.value.name | default(item.key) }}"
     group: "{{ item.value.group | default(omit) }}"
     mode: 0644
-  when: ( users_and_groups.authorized_keys_dir is none)
+  when: (authorized_keys_dir == 'default')
     and (item.value.state is not defined or item.value.state != "absent")
     and (item.value.authorized_keys is defined)
     and (
@@ -175,3 +176,4 @@
     )
   tags:
     - configuration
+
