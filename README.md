@@ -1,6 +1,5 @@
 # Users and Groups
 * [Installation and Dependencies](#installation-and-dependencies)
-* [Tags](#tags)
 * [Examples](#examples)
 
 This roles manages OS users and groups. This was originally forked from sansible/users_and_groups however the 2 work streams have now diverged heavily

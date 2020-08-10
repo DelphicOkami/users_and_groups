@@ -17,9 +17,6 @@
   when: (not users_and_groups.whitelist_groups)
     or ( item.value.groups is defined and ( item.value.groups | intersect(users_and_groups.whitelist_groups )))
     or ( item.value.group is defined and item.value.group in users_and_groups.whitelist_groups)
-  tags:
-    - configuration
-  register: user_created
 
 - name: Check if {{ item.value.name | default(item.key) }} has password
   shell: passwd --status {{ item.value.name | default(item.key) }} | awk '{ print $2 }' | grep 'NP\|L' > /dev/null
@@ -31,13 +28,10 @@
       ( item.value.state is not defined )
       or ( item.value.state != "absent" )
     )
-    and ( user_created.changed )
-  tags:
-    - configuration
 
 - name: Reset {{ item.value.name | default(item.key) }}'s locked or absent password
   become: yes
-  command: "usermod -p '{{ item.value.password|default()}}' {{ item.value.name | default(item.key) }}"
+  command: "usermod -p '{{ item.value.password | default() }}' {{ item.value.name | default(item.key) }}"
   when: ( item.value.password is not defined )
     and (
       ( item.value.state is not defined )
@@ -46,10 +40,7 @@
     and ( user_has_no_password is defined )
     and ( user_has_no_password.rc is defined)
     and ( user_has_no_password.rc == 0 )
-    and ( user_created.changed )
     and ( user_password_management )
-  tags:
-    - configuration
 
 - name: Expire new {{ item.value.name | default(item.key) }}'s password to prompt creation
   become: yes
@@ -60,11 +51,8 @@
       or ( item.value.state != "absent" )
     )
     and ( user_has_no_password is defined )
-    and ( user_has_no_password.skipped is not defined or user_has_no_password.skipped == false )
+    and ( user_has_no_password.skipped is not defined or not user_has_no_password.skipped )
     and ( user_has_no_password.rc == 0 )
-    and ( user_created.changed )
-  tags:
-    - configuration
 
 - name: Update {{ item.value.name | default(item.key) }}'s home directory permissions
   become: yes
@@ -81,9 +69,6 @@
       or ( item.value.groups is defined and ( item.value.groups | intersect(users_and_groups.whitelist_groups )))
       or ( item.value.group is defined and item.value.group in users_and_groups.whitelist_groups)
     )
-    and ( user_created.changed )
-  tags:
-    - configuration
 
 - name: Create .ssh directory in default {{ item.value.name | default(item.key) }} home directory
   become: yes
@@ -100,9 +85,6 @@
       or ( item.value.groups is defined and ( item.value.groups | intersect(users_and_groups.whitelist_groups )))
       or ( item.value.group is defined and item.value.group in users_and_groups.whitelist_groups)
     )
-    and ( user_created.changed )
-  tags:
-    - configuration
 
 - name: Copy ssh auth key file to default location
   become: yes
@@ -118,8 +100,6 @@
       or (item.value.groups is defined and (item.value.groups | intersect(users_and_groups.whitelist_groups)))
       or (item.value.group is defined and item.value.group in users_and_groups.whitelist_groups)
     )
-  tags:
-    - configuration
 
 - name: Copy ssh auth key file to alternate location
   become: yes
@@ -136,8 +116,6 @@
       or (item.value.groups is defined and (item.value.groups | intersect(users_and_groups.whitelist_groups)))
       or (item.value.group is defined and item.value.group in users_and_groups.whitelist_groups)
     )
-  tags:
-    - configuration
 
 - name: Add ssh auth keys to default file
   become: yes
@@ -155,8 +133,6 @@
       or (item.value.groups is defined and (item.value.groups | intersect(users_and_groups.whitelist_groups)))
       or (item.value.group is defined and item.value.group in users_and_groups.whitelist_groups)
     )
-  tags:
-    - configuration
 
 - name: Add ssh auth keys ssh auth key file to alternate file
   become: yes
@@ -174,6 +150,3 @@
       or (item.value.groups is defined and (item.value.groups | intersect(users_and_groups.whitelist_groups)))
       or (item.value.group is defined and item.value.group in users_and_groups.whitelist_groups)
     )
-  tags:
-    - configuration
-

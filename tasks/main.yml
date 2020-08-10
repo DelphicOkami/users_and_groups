@@ -1,5 +1,6 @@
 ---
-- set_fact:
+- name: Manage facts in dictionaries
+  set_fact:
     whitelist_groups: "{{ users_and_groups.whitelist_groups | default([]) }}"
     authorized_keys_dir: "{{ users_and_groups.authorized_keys_dir | default('default') }}"
 
@@ -16,8 +17,6 @@
       or (item.value.groups is defined and (item.value.groups | intersect(whitelist_groups)))
       or (item.value.group is defined and item.value.group in whitelist_groups)
     )
-  tags:
-    - configuration
 
 - name: Manage system groups
   become: yes
@@ -26,8 +25,6 @@
     name: "{{ item.value.name | default(item.key) }}"
     system: "{{ item.value.system | default(omit) }}"
   with_dict: "{{ users_and_groups.groups }}"
-  tags:
-    - configuration
 
 - name: Ensure /etc/sudoers.d exists
   become: yes
@@ -37,8 +34,6 @@
     owner: root
     group: root
     mode: 0750
-  tags:
-    - install
 
 - name: Enable include of /etc/sudoers.d
   become: yes
@@ -47,8 +42,6 @@
     regexp: "^#includedir"
     line: "#includedir /etc/sudoers.d"
     state: present
-  tags:
-    - install
 
 - name: Create sudoers config
   become: yes
@@ -56,8 +49,6 @@
     src: sudoers.j2
     dest: "/etc/sudoers.d/{{ item.value.name | default(item.key) }}}"
   with_dict: "{{ users_and_groups.sudoers }}"
-  tags:
-    - configuration
 
 - name: Create alternate authorized_keys directory
   become: yes
@@ -68,11 +59,7 @@
     mode: 0755
     state: directory
   when: authorized_keys_dir != 'default'
-  tags:
-    - install
 
 - name: Create users
   include_tasks: create_user.yml
   with_dict: "{{ users_and_groups.users }}"
-  tags:
-    - configuration

@@ -4,9 +4,7 @@ allow_duplicates: yes
 dependencies: [ ]
 
 galaxy_info:
-  author: 
-    - DelphicOkami
-    - Wojtek Oledzki
+  author: DelphicOkami (forked from Wojtek Oledzki)
   description: Users and groups management made simple
   license: MIT
   min_ansible_version: 1.9
@@ -14,5 +12,5 @@ galaxy_info:
     - name: Ubuntu
       versions:
         - all
-  categories:
+  galaxy_tags:
     - system
