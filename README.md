@@ -1,9 +1,4 @@
 # Users and Roles
-
-Master: [![Build Status](https://travis-ci.org/sansible/users_and_groups.svg?branch=master)](https://travis-ci.org/sansible/users_and_groups)
-Develop: [![Build Status](https://travis-ci.org/sansible/users_and_groups.svg?branch=develop)](https://travis-ci.org/sansible/users_and_groups)
-
-* [ansible.cfg](#ansible-cfg)
 * [Installation and Dependencies](#installation-and-dependencies)
 * [Tags](#tags)
 * [Examples](#examples)
@@ -13,28 +8,16 @@ This roles manages OS users and groups.
 
 
 
-## ansible.cfg
-
-This role is designed to work with merge "hash_behaviour". Make sure your
-ansible.cfg contains these settings
-
-```INI
-[defaults]
-hash_behaviour = merge
-```
-
-
-
 
 ## Installation and Dependencies
 
 This role has no dependencies.
 
-To install run `ansible-galaxy install sansible.users_and_groups` or add
+To install run `ansible-galaxy install DelphicOkami.users_and_groups` or add
 this to your `roles.yml`
 
 ```YAML
-- name: sansible.users_and_groups
+- name: DelphicOkami.users_and_groups
   version: v1.0
 ```
 
@@ -61,7 +44,7 @@ Simple example for creating two users and two groups.
   hosts: sandbox
 
   roles:
-    - name: sansible.users_and_groups
+    - name: DelphicOkami.users_and_groups
       users_and_groups:
         groups:
           lorem: # This is the group name
@@ -92,7 +75,7 @@ Creating a jailed SFTP user (cf [here](https://wiki.archlinux.org/index.php/SFTP
   hosts: sandbox
 
   roles:
-    - name: sansible.users_and_groups
+    - name: DelphicOkami.users_and_groups
       users_and_groups:
         authorized_keys_dir: /etc/ssh/authorized_keys
         groups:
@@ -115,12 +98,12 @@ group|host vars file.
     - "vars/sandbox/users.yml"
 
   roles:
-    - name: sansible.users_and_groups
+    - name: DelphicOkami.users_and_groups
       users_and_groups:
         groups: "{{ base_image.os_groups }}"
         users: "{{ base_image.admins }}"
 
-    - name: sansible.users_and_groups
+    - name: DelphicOkami.users_and_groups
       users_and_groups:
         users: "{{ developers }}"
 ```
@@ -135,16 +118,16 @@ Add selected group to sudoers
     - "vars/sandbox/users.yml"
 
   roles:
-    - name: sansible.users_and_groups
+    - name: DelphicOkami.users_and_groups
       users_and_groups:
         groups: "{{ base_image.os_groups }}"
         users: "{{ base_image.admins }}"
 
-    - name: sansible.users_and_groups
+    - name: DelphicOkami.users_and_groups
       users_and_groups:
         users: "{{ developers }}"
 
-    - name: sansible.users_and_groups
+    - name: DelphicOkami.users_and_groups
       users_and_groups:
         sudoers:
           wheel:
@@ -193,7 +176,7 @@ In a base image:
     - vars/users.yml
 
   roles:
-    - role: sansible.users_and_groups
+    - role: DelphicOkami.users_and_groups
       users_and_groups:
         whitelist_groups:
           - admins
@@ -215,7 +198,7 @@ In a service role:
     - vars/users.yml
 
   roles:
-    - role: sansible.users_and_groups
+    - role: DelphicOkami.users_and_groups
       users_and_groups:
         whitelist_groups:
           - admins
