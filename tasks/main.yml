@@ -1,22 +1,16 @@
 ---
 - name: Manage facts in dictionaries
   set_fact:
-    whitelist_groups: "{{ users_and_groups.whitelist_groups | default([]) }}"
-    authorized_keys_dir: "{{ users_and_groups.authorized_keys_dir | default('default') }}"
+    authorized_keys_dir: "{{ users_and_groups.authorized_keys_dir | default('') }}"
 
 - name: Check for authorized keys duplication
   fail:
     msg: "User {{ item.value.name | default(item.key) }} cannot have authorized_keys and authorized_keys_file specified"
   with_dict: "{{ users_and_groups.users }}"
-  when: (users_and_groups.authorized_keys_dir is not none)
+  when: (authorized_keys_dir is not none)
     and (item.value.state is not defined or item.value.state != "absent")
     and (item.value.authorized_keys_file is defined)
     and (item.value.authorized_keys is defined)
-    and (
-      (not whitelist_groups)
-      or (item.value.groups is defined and (item.value.groups | intersect(whitelist_groups)))
-      or (item.value.group is defined and item.value.group in whitelist_groups)
-    )
 
 - name: Manage system groups
   become: yes
@@ -58,7 +52,7 @@
     group: "root"
     mode: 0755
     state: directory
-  when: authorized_keys_dir != 'default'
+  when: (authorized_keys_dir|bool)
 
 - name: Create users
   include_tasks: create_user.yml

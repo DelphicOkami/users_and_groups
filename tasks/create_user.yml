@@ -14,9 +14,6 @@
     state: "{{ item.value.state | default(omit) }}"
     system: "{{ item.value.system | default(omit) }}"
     uid: "{{ item.value.uid | default(omit) }}"
-  when: (not users_and_groups.whitelist_groups)
-    or ( item.value.groups is defined and ( item.value.groups | intersect(users_and_groups.whitelist_groups )))
-    or ( item.value.group is defined and item.value.group in users_and_groups.whitelist_groups)
 
 - name: Check if {{ item.value.name | default(item.key) }} has password
   shell: passwd --status {{ item.value.name | default(item.key) }} | awk '{ print $2 }' | grep 'NP\|L' > /dev/null
@@ -64,11 +61,6 @@
     state: directory
   when: (item.value.state is not defined or item.value.state != "absent")
     and (item.value.createhome is not defined or item.value.createhome)
-    and (
-      (not users_and_groups.whitelist_groups)
-      or ( item.value.groups is defined and ( item.value.groups | intersect(users_and_groups.whitelist_groups )))
-      or ( item.value.group is defined and item.value.group in users_and_groups.whitelist_groups)
-    )
 
 - name: Create .ssh directory in default {{ item.value.name | default(item.key) }} home directory
   become: yes
@@ -78,13 +70,8 @@
     group: "{{ item.value.group | default(omit) }}"
     mode: 0700
     state: directory
-  when: (authorized_keys_dir == 'default')
+  when: not (authorized_keys_dir|bool)
     and (item.value.state is not defined or item.value.state != "absent")
-    and (
-      (not users_and_groups.whitelist_groups)
-      or ( item.value.groups is defined and ( item.value.groups | intersect(users_and_groups.whitelist_groups )))
-      or ( item.value.group is defined and item.value.group in users_and_groups.whitelist_groups)
-    )
 
 - name: Copy ssh auth key file to default location
   become: yes
@@ -92,30 +79,20 @@
     user: "{{ item.value.name | default(item.key) }}"
     key: "{{ lookup('file', item.value.authorized_keys_file) }}"
     manage_dir: yes
-  when: (authorized_keys_dir == 'default')
+  when: not (authorized_keys_dir|bool)
     and (item.value.state is not defined or item.value.state != "absent")
     and (item.value.authorized_keys_file is defined)
-    and (
-      (not users_and_groups.whitelist_groups)
-      or (item.value.groups is defined and (item.value.groups | intersect(users_and_groups.whitelist_groups)))
-      or (item.value.group is defined and item.value.group in users_and_groups.whitelist_groups)
-    )
 
 - name: Copy ssh auth key file to alternate location
   become: yes
   authorized_key:
     user: "{{ item.value.name | default(item.key) }}"
     key: "{{ lookup('file', item.value.authorized_keys_file) }}"
-    path: "{{ users_and_groups.authorized_keys_dir ~ '/' ~ }}{{ item.value.name | default(item.key) }}"
+    path: "{{ authorized_keys_dir }}/{{ item.value.name | default(item.key) }}"
     manage_dir: no
-  when: (authorized_keys_dir != 'default')
+  when: (authorized_keys_dir|bool)
     and (item.value.state is not defined or item.value.state != "absent")
     and (item.value.authorized_keys_file is defined)
-    and (
-      (not users_and_groups.whitelist_groups)
-      or (item.value.groups is defined and (item.value.groups | intersect(users_and_groups.whitelist_groups)))
-      or (item.value.group is defined and item.value.group in users_and_groups.whitelist_groups)
-    )
 
 - name: Add ssh auth keys to default file
   become: yes
@@ -125,28 +102,18 @@
     owner: "{{ item.value.name | default(item.key) }}"
     group: "{{ item.value.group | default(omit) }}"
     mode: 0644
-  when: (authorized_keys_dir == 'default')
+  when: not (authorized_keys_dir|bool)
     and (item.value.state is not defined or item.value.state != "absent")
     and (item.value.authorized_keys is defined)
-    and (
-      (not users_and_groups.whitelist_groups)
-      or (item.value.groups is defined and (item.value.groups | intersect(users_and_groups.whitelist_groups)))
-      or (item.value.group is defined and item.value.group in users_and_groups.whitelist_groups)
-    )
 
-- name: Add ssh auth keys ssh auth key file to alternate file
+- name: Add ssh auth key file to alternate file
   become: yes
   template:
     src: authorized_keys.j2
-    dest: "{{ users_and_groups.authorized_keys_dir ~ '/' ~ }}{{ item.value.name | default(item.key) }}"
+    dest: "{{ authorized_keys_dir }}/{{ item.value.name | default(item.key) }}"
     owner: "{{ item.value.name | default(item.key) }}"
     group: "{{ item.value.group | default(omit) }}"
     mode: 0644
-  when: (users_and_groups.authorized_keys_dir is not none)
+  when: (authorized_keys_dir|bool)
     and (item.value.state is not defined or item.value.state != "absent")
     and (item.value.authorized_keys is defined)
-    and (
-      (not users_and_groups.whitelist_groups)
-      or (item.value.groups is defined and (item.value.groups | intersect(users_and_groups.whitelist_groups)))
-      or (item.value.group is defined and item.value.group in users_and_groups.whitelist_groups)
-    )
